@@ -3,6 +3,7 @@ from tkinter import ttk
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import numpy as np
 
 def create_visual_widget(dashboard):
     """Create the visual (position and graph) widget"""
@@ -31,18 +32,24 @@ def create_visual_widget(dashboard):
     tk.Label(map_topics_frame, text="Robot 1:").grid(row=0, column=0, sticky="w", padx=2)
     dashboard.pos_topic1_combo = ttk.Combobox(map_topics_frame, values=dashboard.available_topics, width=30)  
     dashboard.pos_topic1_combo.grid(row=0, column=1, padx=2, pady=2)
+    # Add binding for Robot 1 position topic selection
+    dashboard.pos_topic1_combo.bind("<<ComboboxSelected>>", 
+                     lambda e: dashboard.subscribe_to_position(dashboard.pos_topic1_combo.get(), 1))
 
     # Robot 1 color box
-    robot1_color_box = tk.Label(map_topics_frame, bg="red", width=2, height=1, relief=tk.SOLID)
+    robot1_color_box = tk.Label(map_topics_frame, bg="#78c600", width=2, height=1, relief=tk.SOLID)  # Merah untuk Robot 1
     robot1_color_box.grid(row=0, column=2, padx=5)
 
     # Robot 2 position topic selection
     tk.Label(map_topics_frame, text="Robot 2:").grid(row=0, column=3, sticky="w", padx=2)
     dashboard.pos_topic2_combo = ttk.Combobox(map_topics_frame, values=dashboard.available_topics, width=30) 
     dashboard.pos_topic2_combo.grid(row=0, column=4, padx=2, pady=2)
+    # Add binding for Robot 2 position topic selection
+    dashboard.pos_topic2_combo.bind("<<ComboboxSelected>>", 
+                     lambda e: dashboard.subscribe_to_position(dashboard.pos_topic2_combo.get(), 2))
 
     # Robot 2 color box
-    robot2_color_box = tk.Label(map_topics_frame, bg="blue", width=2, height=1, relief=tk.SOLID)
+    robot2_color_box = tk.Label(map_topics_frame, bg="#0000FF", width=2, height=1, relief=tk.SOLID)  # Biru untuk Robot 2
     robot2_color_box.grid(row=0, column=5, padx=5)
     
     # Coordinates display
@@ -66,7 +73,8 @@ def create_visual_widget(dashboard):
     # Load field image
     try:
         img = plt.imread("/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/new_map.png")
-        dashboard.field_img = dashboard.ax.imshow(img, extent=[0, 1500, 0, 800])  # Set map scale to 1500 x 800
+        flipped_img = np.flipud(img)  # Flip the image vertically
+        dashboard.field_img = dashboard.ax.imshow(flipped_img, extent=[0, 1500, 0, 800])  # Set map scale to 1500 x 800
         
         # Set up plot
         dashboard.ax.set_xlim(0, 1500)  # Set x-axis range
@@ -74,8 +82,8 @@ def create_visual_widget(dashboard):
         dashboard.ax.grid(True)
 
         # Initialize robot positions (start at origin)
-        dashboard.robot1_pos = dashboard.ax.plot(0, 0, 'ro', markersize=40)[0]  # Red marker for Robot 1
-        dashboard.robot2_pos = dashboard.ax.plot(0, 0, 'bo', markersize=40)[0]  # Blue marker for Robot 2
+        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', color='#78c600', markersize=40)[0]  # Oranye untuk Robot 1
+        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', color='#0000FF', markersize=40)[0]  # Biru muda untuk Robot 2
 
         # Create canvas
         dashboard.canvas = FigureCanvasTkAgg(dashboard.fig, dashboard.map_tab)
@@ -127,7 +135,7 @@ def create_visual_widget(dashboard):
     dashboard.graph_canvas = FigureCanvasTkAgg(dashboard.graph_fig, dashboard.graph_tab)
     dashboard.graph_canvas.draw()
     dashboard.graph_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-    
+ 
 def update_graph(dashboard):
     """Update the graph with the latest data"""
     # Check if data exists
