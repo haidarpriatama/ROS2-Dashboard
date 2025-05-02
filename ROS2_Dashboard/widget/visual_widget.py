@@ -65,7 +65,7 @@ def create_visual_widget(dashboard):
     
     # Load field image
     try:
-        img = plt.imread("/home/haidar/ros2_ws/src/data_logging_gui/data_logging_gui/resources/map.png")
+        img = plt.imread("/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/map.png")
         dashboard.field_img = dashboard.ax.imshow(img, extent=[0, 1500, 0, 800])  # Set map scale to 1500 x 800
         
         # Set up plot
