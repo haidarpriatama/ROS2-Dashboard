@@ -37,7 +37,7 @@ def create_visual_widget(dashboard):
                      lambda e: dashboard.subscribe_to_position(dashboard.pos_topic1_combo.get(), 1))
 
     # Robot 1 color box
-    robot1_color_box = tk.Label(map_topics_frame, bg="#78c600", width=2, height=1, relief=tk.SOLID)  # Merah untuk Robot 1
+    robot1_color_box = tk.Label(map_topics_frame, bg="#FF0000", width=2, height=1, relief=tk.SOLID)  # Merah untuk Robot 1
     robot1_color_box.grid(row=0, column=2, padx=5)
 
     # Robot 2 position topic selection
@@ -82,8 +82,8 @@ def create_visual_widget(dashboard):
         dashboard.ax.grid(True)
 
         # Initialize robot positions (start at origin)
-        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', color='#78c600', markersize=40)[0]  # Oranye untuk Robot 1
-        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', color='#0000FF', markersize=40)[0]  # Biru muda untuk Robot 2
+        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000FF', mec='#000000', mew=1.5 , markersize=40)[0]  # Oranye untuk Robot 1
+        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#000000', mew=1.5 , markersize=40)[0]  # Biru muda untuk Robot 2
 
         # Create canvas
         dashboard.canvas = FigureCanvasTkAgg(dashboard.fig, dashboard.map_tab)
