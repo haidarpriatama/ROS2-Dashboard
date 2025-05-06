@@ -82,7 +82,8 @@ def create_visual_widget(dashboard):
         dashboard.ax.grid(True)
 
         # Initialize robot positions (start at origin)
-        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#000000', mew=1.5 , markersize=40)[0]  # Biru muda untuk Robot 2
+        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#1C045EFF', mew=3 , markersize=40)[0]  # Biru muda untuk Robot 2
+        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000', mec='#6E0000FF', mew=3 , markersize=40)[0]  # Oranye untuk Robot 1
 
         # Create canvas
         dashboard.canvas = FigureCanvasTkAgg(dashboard.fig, dashboard.map_tab)
