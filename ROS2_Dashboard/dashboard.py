@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk
 from threading import Thread
 import rclpy
 from rclpy.node import Node
@@ -31,8 +32,13 @@ class ROS2_Dashboard:
     def __init__(self, master):
         self.master = master
         self.master.title("ROS2 Dashboard")
+        self.master.wm_title("ROS Dashboard") 
         self.master.geometry("1700x850")
         # self.master.resizable(False, False)
+        
+        # Set logo icon
+        icon = ImageTk.PhotoImage(Image.open("/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/icon_app.png"))
+        self.master.iconphoto(True, icon)
         
         # Config file path
         self.config_file = os.path.join(os.path.expanduser("~"), ".ros2_dashboard_config.json")
