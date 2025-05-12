@@ -10,7 +10,7 @@ import os
 
 # Import GUI components
 from widget.data_logger_widget import create_data_logger_widget
-from widget.send_data_widget import create_send_data_widget
+from widget.send_data_widget import create_send_data_widget, send_pid_values
 from widget.status_widget import create_status_widget
 from widget.visual_widget import create_visual_widget, add_graph_methods
 from widget.gui_info_widget import create_gui_info_widget
@@ -32,7 +32,7 @@ class ROS2_Dashboard:
     def __init__(self, master):
         self.master = master
         self.master.title("ROS2 Dashboard")
-        self.master.wm_title("ROS Dashboard") 
+        self.master.wm_title("ROS2 Dashboard")
         self.master.geometry("1700x850")
         # self.master.resizable(False, False)
         
@@ -121,7 +121,7 @@ class ROS2_Dashboard:
     
     def update_clock(self):
         # Update time and date
-        current_time = time.strftime("%H:%M")
+        current_time = time.strftime("%H:%M:%S")
         current_date = time.strftime("%d/%m/%Y")
         self.time_label.config(text=current_time)
         self.date_label.config(text=current_date)
@@ -438,5 +438,6 @@ ROS2_Dashboard.subscribe_to_position = subscribe_to_position
 ROS2_Dashboard.subscribe_to_graph_topic = subscribe_to_graph_topic
 ROS2_Dashboard.update_robot_position = update_robot_position
 ROS2_Dashboard.send_data = send_data
+ROS2_Dashboard.send_pid_values = send_pid_values 
 ROS2_Dashboard.save_config = save_config
 ROS2_Dashboard.load_config = load_config

@@ -18,7 +18,13 @@ def save_config(dashboard):
         "pos_topic1": getattr(dashboard, "pos_topic1", None),  # Robot 1 position
         "pos_topic2": getattr(dashboard, "pos_topic2", None),  # Robot 2 position
         "output_topic": getattr(dashboard, "output_topic", None),  # Ensure output_topic is included
-        "graph_topic": getattr(dashboard, "graph_topic", None)  # Graph topic
+        "graph_topic": getattr(dashboard, "graph_topic", None),  # Graph topic
+        
+        # PID settings
+        "pid_p_value": getattr(dashboard, "pid_p_value", None),  # P value
+        "pid_i_value": getattr(dashboard, "pid_i_value", None),  # I value
+        "pid_d_value": getattr(dashboard, "pid_d_value", None),  # D value
+        "pid_robot": getattr(dashboard, "pid_robot", 1)  # Selected robot (default to 1)
     }
     
     # Save to file
@@ -34,6 +40,8 @@ def save_config(dashboard):
             print(f"Robot 1 status topic saved as: {config['status_topic1']}")
         if config.get('status_topic2'):
             print(f"Robot 2 status topic saved as: {config['status_topic2']}")
+        if config.get('pid_p_value') is not None:
+            print(f"PID settings saved: P={config['pid_p_value']}, I={config['pid_i_value']}, D={config['pid_d_value']} for Robot {config['pid_robot']}")
     except Exception as e:
         print(f"Error saving configuration: {e}")
 
@@ -99,6 +107,29 @@ def load_config(dashboard):
                     if hasattr(dashboard, 'graph_topic_combo'):
                         dashboard.graph_topic_combo.set(config["graph_topic"])
                     print(f"Loaded graph topic: {config['graph_topic']}")
+                    
+            # Load PID settings
+            if "pid_p_value" in config and config["pid_p_value"] is not None:
+                dashboard.pid_p_value = config["pid_p_value"]
+                if hasattr(dashboard, 'pid_p_entry'):
+                    dashboard.pid_p_entry.insert(0, str(dashboard.pid_p_value))
+            if "pid_i_value" in config and config["pid_i_value"] is not None:
+                dashboard.pid_i_value = config["pid_i_value"]
+                if hasattr(dashboard, 'pid_i_entry'):
+                    dashboard.pid_i_entry.insert(0, str(dashboard.pid_i_value))
+            if "pid_d_value" in config and config["pid_d_value"] is not None:
+                dashboard.pid_d_value = config["pid_d_value"]
+                if hasattr(dashboard, 'pid_d_entry'):
+                    dashboard.pid_d_entry.insert(0, str(dashboard.pid_d_value))
+            if "pid_robot" in config and config["pid_robot"] is not None:
+                dashboard.pid_robot = config["pid_robot"]
+                if hasattr(dashboard, 'pid_robot_var'):
+                    dashboard.pid_robot_var.set(dashboard.pid_robot)
+            print(f"Loaded PID settings: P={dashboard.pid_p_value}, I={dashboard.pid_i_value}, D={dashboard.pid_d_value} for Robot {dashboard.pid_robot}")
+            # Load other settings if needed
+            # Add more settings as needed
+        else:
+            print(f"Configuration file {dashboard.config_file} does not exist. Using default settings.")
     
     except Exception as e:
         print(f"Error loading configuration: {e}")
