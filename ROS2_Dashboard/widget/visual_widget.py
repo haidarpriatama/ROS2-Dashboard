@@ -82,8 +82,8 @@ def create_visual_widget(dashboard):
         dashboard.ax.grid(True)
 
         # Initialize robot positions (start at origin)
-        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#1C045EFF', mew=3 , markersize=40)[0]  # Biru muda untuk Robot 2
-        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000', mec='#6E0000FF', mew=3 , markersize=40)[0]  # Oranye untuk Robot 1
+        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#1C045EFF', mew=2 , markersize=40)[0]  # Biru muda untuk Robot 2
+        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000', mec='#6E0000FF', mew=2 , markersize=40)[0]  # Oranye untuk Robot 1
 
         # Create canvas
         dashboard.canvas = FigureCanvasTkAgg(dashboard.fig, dashboard.map_tab)
@@ -127,6 +127,13 @@ def create_visual_widget(dashboard):
     dashboard.graph_ax2.set_ylabel('Y and SPY')
     dashboard.graph_ax2.legend()
     dashboard.graph_ax2.grid(True)
+    
+    # # Display data value
+    # dashboard.graph_text = dashboard.graph_ax2.text(
+    #     0.5, -0.23, "X: 0.00, Y: 0.00, SPX: 0.00, SPY: 0.00",
+    #     fontsize=10, color='grey', backgroundcolor='black',
+    #     transform=dashboard.graph_ax2.transAxes, ha='center', va='top'
+    # )
     
     # Adjust spacing between subplots
     dashboard.graph_fig.subplots_adjust(hspace=0.3)  # Reduce vertical spacing
