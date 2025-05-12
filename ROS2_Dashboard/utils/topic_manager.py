@@ -200,18 +200,29 @@ def subscribe_to_status(dashboard, topic_name, robot_num=1):
                     mem_attr = f"memory_usage_{robot_num}"
                     temp_attr = f"cpu_temp_{robot_num}"
                     
-                    # Handle CPU usage - show percentage symbol if it's a number
+                    # Handle CPU usage - show percentage symbol and color-code based on value
                     if hasattr(dashboard, cpu_attr):
                         try:
                             # Try to convert to float to check if it's a number
-                            float(cpu_usage)
-                            # Set text without % (will use separate % label)
-                            getattr(dashboard, cpu_attr).config(text=cpu_usage)
+                            cpu_value = float(cpu_usage)
+                            
+                            # Color code based on CPU usage ranges
+                            if 0 <= cpu_value <= 45:
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#00AA00")  # Green
+                            elif 45 < cpu_value <= 80:
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FFEB3B")  # Yellow
+                            elif 80 < cpu_value <= 90:
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FF8C00")  # Orange
+                            elif cpu_value > 90:
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FF0000")  # Red
+                            else:
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="black")
+                            
                             # Show percentage symbol
                             getattr(dashboard, f"{cpu_attr}_pct").pack(side=tk.LEFT, padx=0)
                         except ValueError:
                             # Not a number (like N/A), don't show % symbol
-                            getattr(dashboard, cpu_attr).config(text=cpu_usage)
+                            getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="black")
                             getattr(dashboard, f"{cpu_attr}_pct").pack_forget()
                     
                     # Handle Memory usage - show percentage symbol if it's a number
@@ -457,9 +468,17 @@ def subscribe_to_graph_topic(dashboard, topic_name):
     dashboard.graph_spx_data = []
     dashboard.graph_spy_data = []
     
+    # Initialize graph paused state if not exist
+    if not hasattr(dashboard, 'graph_paused'):
+        dashboard.graph_paused = False
+    
     # Callback for handling messages
     def callback(msg):
         try:
+            # Skip processing if graph is paused
+            if hasattr(dashboard, 'graph_paused') and dashboard.graph_paused:
+                return
+                
             # Expected format: 'L [x] [y] [yaw] [spx] [spy] [spyaw]'
             parts = msg.data.split()
             if parts[0] == 'L' and len(parts) >= 7:

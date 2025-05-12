@@ -18,7 +18,7 @@ def create_status_widget(dashboard):
     # Robot 1 status parameters - now including CPU Temperature
     dashboard.robot1_params = {}
     status_params = [
-        ("CPU Usage", "cpu_usage_1"), 
+        ("CPU Usage", "cpu_usage_1"),
         ("Memory Usage", "memory_usage_1"), 
         ("CPU Temp", "cpu_temp_1"),
         ("Battery", "battery_1")
@@ -32,7 +32,7 @@ def create_status_widget(dashboard):
         value_frame.grid(row=idx, column=2, sticky="w")
         
         # Create the value label in the frame
-        setattr(dashboard, attr_name, tk.Label(value_frame, text="N/A", width=7, anchor="e"))
+        setattr(dashboard, attr_name, tk.Label(value_frame, text="N/A", width=4, anchor="e"))
         getattr(dashboard, attr_name).pack(side=tk.LEFT, padx=0)
         
         # Create unit symbol in the same frame
@@ -70,7 +70,7 @@ def create_status_widget(dashboard):
         value_frame.grid(row=idx, column=2, sticky="w")
         
         # Create the value label in the frame
-        setattr(dashboard, attr_name, tk.Label(value_frame, text="N/A", width=7, anchor="e"))
+        setattr(dashboard, attr_name, tk.Label(value_frame, text="N/A", width=4, anchor="e"))
         getattr(dashboard, attr_name).pack(side=tk.LEFT, padx=0)
         
         # Create unit symbol in the same frame

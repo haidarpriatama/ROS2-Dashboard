@@ -95,8 +95,12 @@ def create_visual_widget(dashboard):
         tk.Label(dashboard.map_tab, text="Error loading map").pack()
     
     # ---- GRAPH TAB ----
-    # Graph topic selection frame
-    graph_topics_frame = tk.Frame(dashboard.graph_tab)
+    # Create main graph frame that will contain all elements
+    dashboard.graph_main_frame = tk.Frame(dashboard.graph_tab)
+    dashboard.graph_main_frame.pack(fill=tk.BOTH, expand=True)
+    
+    # Graph topic selection frame (at the top)
+    graph_topics_frame = tk.Frame(dashboard.graph_main_frame)
     graph_topics_frame.pack(fill=tk.X, pady=2)
     
     # Graph topic selection
@@ -105,6 +109,39 @@ def create_visual_widget(dashboard):
     dashboard.graph_topic_combo.grid(row=0, column=1, padx=2, pady=2)
     dashboard.graph_topic_combo.bind("<<ComboboxSelected>>", 
                         lambda e: dashboard.subscribe_to_graph_topic(dashboard.graph_topic_combo.get()))
+    
+    # Add graph control (Play/Pause) buttons
+    dashboard.graph_paused = False  # Flag to track if graph updating is paused
+    dashboard.pause_button = ttk.Button(graph_topics_frame, text="Pause", width=10,
+                                       command=lambda: toggle_graph_pause(dashboard))
+    dashboard.pause_button.grid(row=0, column=2, padx=5, pady=2)
+    
+    dashboard.reset_button = ttk.Button(graph_topics_frame, text="Reset Time", width=10,
+                                       command=lambda: reset_graph_time(dashboard))
+    dashboard.reset_button.grid(row=0, column=3, padx=5, pady=2)
+    
+    # Add status display at the top (above the graph) 
+    dashboard.graph_status_frame = tk.Frame(dashboard.graph_main_frame)
+    dashboard.graph_status_frame.pack(fill=tk.X, pady=2)
+    
+    dashboard.graph_status_label = tk.Label(dashboard.graph_status_frame, text="Status: Running", 
+                                           font=("Arial", 9), bd=1, relief=tk.SUNKEN, anchor=tk.W, padx=5)
+    dashboard.graph_status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+    
+    dashboard.graph_time_label = tk.Label(dashboard.graph_status_frame, text="Elapsed: 0.00s", 
+                                        font=("Arial", 9), bd=1, relief=tk.SUNKEN, anchor=tk.E, padx=5)
+    dashboard.graph_time_label.pack(side=tk.RIGHT, fill=tk.X, expand=True)
+    
+    # Add auto-center option
+    dashboard.auto_center_var = tk.BooleanVar(value=True)
+    dashboard.auto_center_check = tk.Checkbutton(dashboard.graph_status_frame, 
+                                                text="Auto-center setpoints", 
+                                                variable=dashboard.auto_center_var)
+    dashboard.auto_center_check.pack(side=tk.RIGHT, padx=10)
+    
+    # Create graph frame to contain the matplotlib canvas
+    dashboard.graph_plot_frame = tk.Frame(dashboard.graph_main_frame)
+    dashboard.graph_plot_frame.pack(fill=tk.BOTH, expand=True, pady=2)
     
     # Create matplotlib figure for graph
     dashboard.graph_fig = Figure(figsize=(2, 4), dpi=100)
@@ -128,28 +165,74 @@ def create_visual_widget(dashboard):
     dashboard.graph_ax2.legend()
     dashboard.graph_ax2.grid(True)
     
-    # # Display data value
-    # dashboard.graph_text = dashboard.graph_ax2.text(
-    #     0.5, -0.23, "X: 0.00, Y: 0.00, SPX: 0.00, SPY: 0.00",
-    #     fontsize=10, color='grey', backgroundcolor='black',
-    #     transform=dashboard.graph_ax2.transAxes, ha='center', va='top'
-    # )
-    
     # Adjust spacing between subplots
-    dashboard.graph_fig.subplots_adjust(hspace=0.3)  # Reduce vertical spacing
+    dashboard.graph_fig.subplots_adjust(hspace=0.3, bottom=0.15)  # Increase bottom margin
     
     # Create graph canvas
-    dashboard.graph_canvas = FigureCanvasTkAgg(dashboard.graph_fig, dashboard.graph_tab)
+    dashboard.graph_canvas = FigureCanvasTkAgg(dashboard.graph_fig, dashboard.graph_plot_frame)
     dashboard.graph_canvas.draw()
     dashboard.graph_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
  
+def toggle_graph_pause(dashboard):
+    """Toggle graph pause state"""
+    dashboard.graph_paused = not dashboard.graph_paused
+    
+    if dashboard.graph_paused:
+        dashboard.pause_button.config(text="Resume")
+        dashboard.graph_status_label.config(text="Status: Paused")
+    else:
+        dashboard.pause_button.config(text="Pause")
+        dashboard.graph_status_label.config(text="Status: Running")
+
+def reset_graph_time(dashboard):
+    """Reset graph time to zero and clear existing data"""
+    # Store the pause state
+    was_paused = dashboard.graph_paused
+    
+    # Temporarily pause if it wasn't already
+    dashboard.graph_paused = True
+    
+    # Clear data
+    dashboard.graph_time_data = []
+    dashboard.graph_x_data = []
+    dashboard.graph_y_data = []
+    dashboard.graph_spx_data = []
+    dashboard.graph_spy_data = []
+    
+    # Reset the graph start time to current time 
+    # (will be properly set when next data point arrives)
+    if hasattr(dashboard, 'node'):
+        dashboard.graph_start_time = dashboard.node.get_clock().now().nanoseconds / 1e9
+    
+    # Update the time display
+    dashboard.graph_time_label.config(text="Elapsed: 0.00s")
+    
+    # Update graph
+    update_graph(dashboard)
+    
+    # Restore previous pause state
+    dashboard.graph_paused = was_paused
+    
+    # Update button text
+    if dashboard.graph_paused:
+        dashboard.pause_button.config(text="Resume")
+        dashboard.graph_status_label.config(text="Status: Paused")
+    else:
+        dashboard.pause_button.config(text="Pause")
+        dashboard.graph_status_label.config(text="Status: Running")
+
 def update_graph(dashboard):
-    """Update the graph with the latest data"""
+    """Update the graph with the latest data while keeping setpoints centered"""
     # Check if data exists
     if not hasattr(dashboard, 'graph_time_data') or len(dashboard.graph_time_data) == 0:
         return
     
     try:
+        # Update the time display if there's data
+        if dashboard.graph_time_data:
+            current_time = dashboard.graph_time_data[-1]
+            dashboard.graph_time_label.config(text=f"Elapsed: {current_time:.2f}s")
+            
         # Clear both axes to start fresh
         dashboard.graph_ax1.clear()
         dashboard.graph_ax2.clear()
@@ -168,6 +251,57 @@ def update_graph(dashboard):
             dashboard.graph_ax1.set_xlim(min_time, current_time)
             dashboard.graph_ax2.set_xlim(min_time, current_time)
         
+        # Center the y-axis around the setpoints (SPX and SPY) if auto-center is enabled
+        if hasattr(dashboard, 'auto_center_var') and dashboard.auto_center_var.get():
+            if dashboard.graph_spx_data and dashboard.graph_spy_data:
+                # Get the current SPX and SPY values
+                current_spx = dashboard.graph_spx_data[-1]
+                current_spy = dashboard.graph_spy_data[-1]
+                
+                # Calculate min and max for X axis (actual position)
+                if dashboard.graph_x_data:
+                    # Filter to only recent data (within the current view)
+                    recent_indices = [i for i, t in enumerate(dashboard.graph_time_data) if t >= min_time]
+                    recent_x_data = [dashboard.graph_x_data[i] for i in recent_indices]
+                    
+                    if recent_x_data:
+                        x_min = min(recent_x_data)
+                        x_max = max(recent_x_data)
+                        
+                        # Calculate the range and make sure it's at least 50 units
+                        x_range = max(50, x_max - x_min)
+                        
+                        # Make sure SPX is in the middle with enough margin above and below
+                        margin = max(abs(current_spx - x_min), abs(x_max - current_spx), x_range/2)
+                        dashboard.graph_ax1.set_ylim(
+                            current_spx - margin - 10,  # Add 10 extra units for padding
+                            current_spx + margin + 10
+                        )
+                
+                # Calculate min and max for Y axis (actual position)
+                if dashboard.graph_y_data:
+                    # Filter to only recent data (within the current view)
+                    recent_indices = [i for i, t in enumerate(dashboard.graph_time_data) if t >= min_time]
+                    recent_y_data = [dashboard.graph_y_data[i] for i in recent_indices]
+                    
+                    if recent_y_data:
+                        y_min = min(recent_y_data)
+                        y_max = max(recent_y_data)
+                        
+                        # Calculate the range and make sure it's at least 50 units
+                        y_range = max(50, y_max - y_min)
+                        
+                        # Make sure SPY is in the middle with enough margin above and below
+                        margin = max(abs(current_spy - y_min), abs(y_max - current_spy), y_range/2)
+                        dashboard.graph_ax2.set_ylim(
+                            current_spy - margin - 10,  # Add 10 extra units for padding
+                            current_spy + margin + 10
+                        )
+                        
+                # Add horizontal lines for setpoints to make them more visible
+                dashboard.graph_ax1.axhline(y=current_spx, color='k', linestyle='--', alpha=0.5)
+                dashboard.graph_ax2.axhline(y=current_spy, color='k', linestyle='--', alpha=0.5)
+        
         # Reconfigure graph axes
         dashboard.graph_ax1.set_xlabel('')
         dashboard.graph_ax1.set_ylabel('X and SPX')
@@ -180,7 +314,7 @@ def update_graph(dashboard):
         dashboard.graph_ax2.grid(True)
         
         # Adjust spacing between subplots
-        dashboard.graph_fig.subplots_adjust(hspace=0.3)  # Reduce vertical spacing
+        dashboard.graph_fig.subplots_adjust(hspace=0.3, bottom=0.15)  # Increase bottom margin
         
         # Adjust figure layout for better spacing
         dashboard.graph_fig.tight_layout()
@@ -197,3 +331,5 @@ def add_graph_methods(dashboard):
     """Add graph-related methods to the dashboard"""
     # Add graph update method
     dashboard.update_graph = lambda: update_graph(dashboard)
+    dashboard.toggle_graph_pause = lambda: toggle_graph_pause(dashboard)
+    dashboard.reset_graph_time = lambda: reset_graph_time(dashboard)

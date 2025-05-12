@@ -73,6 +73,7 @@ class ROS2_Dashboard:
         self.graph_y_data = []
         self.graph_spx_data = []
         self.graph_spy_data = []
+        self.graph_paused = False  # Initialize graph pause state
         
         # Flag for safe shutdown
         self.stopping = False
