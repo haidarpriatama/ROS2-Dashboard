@@ -210,7 +210,7 @@ def subscribe_to_status(dashboard, topic_name, robot_num=1):
                             if 0 <= cpu_value <= 45:
                                 getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#00AA00")  # Green
                             elif 45 < cpu_value <= 80:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FFEB3B")  # Yellow
+                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#EEFF00")  # Yellow
                             elif 80 < cpu_value <= 90:
                                 getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FF8C00")  # Orange
                             elif cpu_value > 90:

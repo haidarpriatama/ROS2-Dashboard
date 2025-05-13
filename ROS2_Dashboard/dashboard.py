@@ -41,7 +41,7 @@ class ROS2_Dashboard:
         self.master.iconphoto(True, icon)
         
         # Config file path
-        self.config_file = os.path.join(os.path.expanduser("~"), ".ros2_dashboard_config.json")
+        self.config_file = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/json/config.json"
         
         # ROS2 Node initialization
         self.node = Node("ros2_dashboard_gui")
@@ -173,8 +173,8 @@ class ROS2_Dashboard:
                 if current_value in self.available_topics:
                     self.graph_topic_combo.set(current_value)
         
-        # Schedule the next refresh (every 5 seconds)
-        self.master.after(5000, self.auto_refresh_topics)
+        # Schedule the next refresh (every 2 seconds)
+        self.master.after(2000, self.auto_refresh_topics)
     
     def open_settings(self):
         # Create settings window for all configurations
