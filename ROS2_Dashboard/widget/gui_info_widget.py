@@ -17,8 +17,7 @@ def create_gui_info_widget(dashboard):
     # Load logos
     try:
         # Logo 1
-        logo1_path = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/UNDIP_logo.png"
-        logo1_img = Image.open(logo1_path)
+        logo1_img = Image.open(dashboard.resources.UNDIP_LOGO)
         logo1_img = logo1_img.resize((100, 100), Image.LANCZOS)
         logo1_photo = ImageTk.PhotoImage(logo1_img)
         
@@ -27,8 +26,7 @@ def create_gui_info_widget(dashboard):
         logo1_label.pack(pady=5)
         
         # Logo 2
-        logo2_path = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/bandha_logo.png"
-        logo2_img = Image.open(logo2_path)
+        logo2_img = Image.open(dashboard.resources.BANDHA_LOGO)
         logo2_img = logo2_img.resize((100, 100), Image.LANCZOS)
         logo2_photo = ImageTk.PhotoImage(logo2_img)
         
@@ -66,13 +64,12 @@ def create_gui_info_widget(dashboard):
 
     # Settings button with icon
     try:
-        icon_path = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/icon_config.png"
-        settings_icon = Image.open(icon_path)
-        settings_icon = settings_icon.resize((24, 24), Image.LANCZOS)
-        settings_photo = ImageTk.PhotoImage(settings_icon)
+        config_icon = Image.open(dashboard.resources.CONFIG_ICON)
+        config_icon = config_icon.resize((24, 24), Image.LANCZOS)
+        config_photo = ImageTk.PhotoImage(config_icon)
         
-        dashboard.settings_button = tk.Button(dashboard.gui_info_frame, image=settings_photo, command=dashboard.open_settings)
-        dashboard.settings_button.image = settings_photo  # Keep a reference to prevent garbage collection
+        dashboard.settings_button = tk.Button(dashboard.gui_info_frame, image=config_photo, command=dashboard.open_settings)
+        dashboard.settings_button.image = config_photo  # Keep a reference to prevent garbage collection
         dashboard.settings_button.pack(side=tk.BOTTOM, pady=5)
     except Exception as e:
         print(f"Error loading settings icon: {e}")

@@ -24,9 +24,28 @@ def create_visual_widget(dashboard):
     dashboard.position_notebook.add(dashboard.graph_tab, text="Graph")
     
     # ---- MAP TAB ----
-    # Topic selection for robots' positions
-    map_topics_frame = tk.Frame(dashboard.map_tab)
-    map_topics_frame.pack(fill=tk.X, pady=2)
+    # Top frame to hold both topic selection and team toggle button
+    top_frame = tk.Frame(dashboard.map_tab)
+    top_frame.pack(fill=tk.X, pady=2)
+    
+    # Topic selection for robots' positions (left side)
+    map_topics_frame = tk.Frame(top_frame)
+    map_topics_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+    
+    # Team toggle button frame (right side)
+    team_toggle_frame = tk.Frame(top_frame)
+    team_toggle_frame.pack(side=tk.RIGHT, padx=10)
+    
+    # Create team toggle button
+    dashboard.current_team = 1  # Default to Team 1 view
+    dashboard.team_toggle_btn = tk.Button(
+        team_toggle_frame, 
+        text="Current: Team 1",
+        fg="#FF0000",  # Warna merah untuk Team 1
+        width=15,
+        command=lambda: toggle_team_view(dashboard)
+    )
+    dashboard.team_toggle_btn.pack()
     
     # Robot 1 position topic selection
     tk.Label(map_topics_frame, text="Robot 1:").grid(row=0, column=0, sticky="w", padx=2)
@@ -72,18 +91,30 @@ def create_visual_widget(dashboard):
     
     # Load field image
     try:
-        img = plt.imread("/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/new_map.png")
-        flipped_img = np.flipud(img)  # Flip the image vertically
-        dashboard.field_img = dashboard.ax.imshow(flipped_img, extent=[0, 1500, 0, 800])  # Set map scale to 1500 x 800
+        dashboard.map_image_path = dashboard.resources.MAP_IMAGE
         
-        # Set up plot
-        dashboard.ax.set_xlim(0, 1500)  # Set x-axis range
-        dashboard.ax.set_ylim(800, 0)   # Set y-axis range (invert y-axis for display)
+        # Load the image
+        img = plt.imread(dashboard.map_image_path)
+        dashboard.field_img = dashboard.ax.imshow(img, extent=[1500, 0, 0, 800])  # Set map scale to 1500 x 800
+        
+        # Store the latest robot positions (for toggling between team views)
+        dashboard.robot1_pos_data = [0, 0]  # [x, y]
+        dashboard.robot2_pos_data = [0, 0]  # [x, y]
+        
+        # Set custom x-axis ticks to ensure 1500 is visible
+        x_ticks = [0, 250, 500, 750, 1000, 1250, 1500]
+        dashboard.ax.set_xticks(x_ticks)
+        
+        # Grid and other settings
         dashboard.ax.grid(True)
+        
+        # Move y-axis label to right side
+        dashboard.ax.yaxis.set_label_position("right")
+        dashboard.ax.yaxis.tick_right()
 
         # Initialize robot positions (start at origin)
-        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#1C045EFF', mew=2 , markersize=40)[0]  # Biru muda untuk Robot 2
-        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000', mec='#6E0000FF', mew=2 , markersize=40)[0]  # Oranye untuk Robot 1
+        dashboard.robot2_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#0000FF', mec='#1C045EFF', mew=2, markersize=40)[0]  # Biru muda untuk Robot 2
+        dashboard.robot1_pos = dashboard.ax.plot(0, 0, marker='o', mfc='#FF0000', mec='#6E0000FF', mew=2, markersize=40)[0]  # Oranye untuk Robot 1
 
         # Create canvas
         dashboard.canvas = FigureCanvasTkAgg(dashboard.fig, dashboard.map_tab)
@@ -140,11 +171,12 @@ def create_visual_widget(dashboard):
     dashboard.auto_center_check.pack(side=tk.RIGHT, padx=10)
     
     # Create graph frame to contain the matplotlib canvas
-    dashboard.graph_plot_frame = tk.Frame(dashboard.graph_main_frame)
-    dashboard.graph_plot_frame.pack(fill=tk.BOTH, expand=True, pady=2)
+    dashboard.graph_plot_frame = tk.Frame(dashboard.graph_main_frame, width=500)
+    dashboard.graph_plot_frame.pack(fill=tk.BOTH, expand=True, pady=2, padx=(10, 10))   # Add horizontal padding
+    dashboard.graph_plot_frame.pack_propagate(False)  # Prevent resizing based on contents
     
     # Create matplotlib figure for graph
-    dashboard.graph_fig = Figure(figsize=(2, 4), dpi=100)
+    dashboard.graph_fig = Figure(figsize=(3, 4), dpi=100)
     dashboard.graph_ax1 = dashboard.graph_fig.add_subplot(2, 1, 1)
     dashboard.graph_ax2 = dashboard.graph_fig.add_subplot(2, 1, 2)
     
@@ -166,13 +198,80 @@ def create_visual_widget(dashboard):
     dashboard.graph_ax2.grid(True)
     
     # Adjust spacing between subplots
-    dashboard.graph_fig.subplots_adjust(hspace=0.3, bottom=0.15)  # Increase bottom margin
+    dashboard.graph_fig.subplots_adjust(left=0.12, right=0.95, hspace=0.3, bottom=0.15, top=0.95)
     
     # Create graph canvas
     dashboard.graph_canvas = FigureCanvasTkAgg(dashboard.graph_fig, dashboard.graph_plot_frame)
     dashboard.graph_canvas.draw()
     dashboard.graph_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
- 
+
+def toggle_team_view(dashboard):
+    """Toggle between Team 1 and Team 2 map views"""
+    # Toggle the current team
+    dashboard.current_team = 3 - dashboard.current_team  # Switches between 1 and 2
+    
+    # Remove the current image
+    dashboard.field_img.remove()
+    
+    # Load image using the stored path
+    img = plt.imread(dashboard.map_image_path)
+    
+    if dashboard.current_team == 1:
+        # Team 1 view (origin at bottom left)
+        # Display image with Team 1 orientation
+        dashboard.field_img = dashboard.ax.imshow(img, extent=[1500, 0, 0, 800])
+        
+        # Set axis orientation for Team 1
+        dashboard.ax.set_xlim(1500, 0)  # X-axis goes from 1500 (left) to 0 (right)
+        dashboard.ax.set_ylim(0, 800)    # Y-axis goes from 0 (bottom) to 800 (top)
+        
+        # Move y-axis to right side for Team 1
+        dashboard.ax.yaxis.set_label_position("right")
+        dashboard.ax.yaxis.tick_right()
+        
+        # Update button text
+        dashboard.team_toggle_btn.config(text="Current: Team 1", fg="#FF0000")
+    else:
+        # Team 2 view (origin at top left)
+        # Display image with Team 2 orientation (same image, different extent)
+        dashboard.field_img = dashboard.ax.imshow(img, extent=[0, 1500, 800, 0])
+        
+        # Set axis orientation for Team 2
+        dashboard.ax.set_xlim(0, 1500)  # X-axis goes from 0 (left) to 1500 (right)  
+        dashboard.ax.set_ylim(800, 0)    # Y-axis goes from 800 (top) to 0 (bottom)
+        
+        # Move y-axis to left side for Team 2
+        dashboard.ax.yaxis.set_label_position("left")
+        dashboard.ax.yaxis.tick_left()
+        
+        # Update button text
+        dashboard.team_toggle_btn.config(text="Current: Team 2", fg="#0000FF")
+    
+    # Update robot positions based on the current view
+    update_robot_display(dashboard)
+    
+    # Ensure grid is visible
+    dashboard.ax.grid(True)
+    
+    # Keep ticks consistent
+    x_ticks = [0, 250, 500, 750, 1000, 1250, 1500]
+    dashboard.ax.set_xticks(x_ticks)
+    
+    # Redraw the canvas
+    dashboard.fig.canvas.draw_idle()
+    dashboard.fig.canvas.flush_events()
+
+def update_robot_display(dashboard):
+    """Update the robot markers on the map based on the current team view"""
+    # Use the stored robot positions to update the display
+    if hasattr(dashboard, 'robot1_pos_data') and hasattr(dashboard, 'robot2_pos_data'):
+        r1x, r1y = dashboard.robot1_pos_data
+        r2x, r2y = dashboard.robot2_pos_data
+        
+        # No coordinate transformation needed - just update the plot data
+        dashboard.robot1_pos.set_data(r1x, r1y)
+        dashboard.robot2_pos.set_data(r2x, r2y)
+
 def toggle_graph_pause(dashboard):
     """Toggle graph pause state"""
     dashboard.graph_paused = not dashboard.graph_paused
@@ -248,8 +347,8 @@ def update_graph(dashboard):
             current_time = dashboard.graph_time_data[-1]
             min_time = max(0, current_time - 10)
             
-            dashboard.graph_ax1.set_xlim(min_time, current_time)
-            dashboard.graph_ax2.set_xlim(min_time, current_time)
+            dashboard.graph_ax1.set_xlim(min_time, current_time + 1)
+            dashboard.graph_ax2.set_xlim(min_time, current_time + 1)
         
         # Center the y-axis around the setpoints (SPX and SPY) if auto-center is enabled
         if hasattr(dashboard, 'auto_center_var') and dashboard.auto_center_var.get():
@@ -317,7 +416,7 @@ def update_graph(dashboard):
         dashboard.graph_fig.subplots_adjust(hspace=0.3, bottom=0.15)  # Increase bottom margin
         
         # Adjust figure layout for better spacing
-        dashboard.graph_fig.tight_layout()
+        dashboard.graph_fig.tight_layout(pad=2.0)
         
         # Redraw the canvas
         dashboard.graph_canvas.draw()

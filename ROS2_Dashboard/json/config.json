@@ -1,8 +1,22 @@
 {
-    "pid_p1_value": 1.0,
-    "pid_i1_value": 2.0,
-    "pid_d1_value": 3.0,
-    "pid_p2_value": 2.0,
-    "pid_i2_value": 3.0,
-    "pid_d2_value": 4.0
+    "output_topic": "/ROBOT1/serverRX",
+    "PID last update": "18:00:05 18/05/2025",
+    "pid_p1_x_value": 1.0,
+    "pid_i1_x_value": 2.0,
+    "pid_d1_x_value": 3.0,
+    "pid_p1_y_value": 4.0,
+    "pid_i1_y_value": 5.0,
+    "pid_d1_y_value": 6.0,
+    "pid_p1_yaw_value": 7.0,
+    "pid_i1_yaw_value": 8.0,
+    "pid_d1_yaw_value": 9.0,
+    "pid_p2_x_value": 10.0,
+    "pid_i2_x_value": 11.0,
+    "pid_d2_x_value": 12.0,
+    "pid_p2_y_value": 13.0,
+    "pid_i2_y_value": 14.0,
+    "pid_d2_y_value": 15.0,
+    "pid_p2_yaw_value": 16.0,
+    "pid_i2_yaw_value": 17.0,
+    "pid_d2_yaw_value": 18.0
 }

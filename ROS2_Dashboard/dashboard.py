@@ -20,13 +20,26 @@ from utils.config_manager import load_config, save_config
 from utils.topic_manager import (
     get_available_topics, 
     subscribe_to_topic, 
-    subscribe_to_status, 
-    subscribe_to_battery, 
+    subscribe_to_status,
     subscribe_to_position,
     subscribe_to_graph_topic,
     update_robot_position,
     send_data
 )
+
+class Resources:
+    # Change this to your actual path
+    # Base path for resources
+    BASE_PATH = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/"
+    # Configuration files
+    CONFIG_FILE = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/json/config.json"
+    
+    # Images
+    MAP_IMAGE = BASE_PATH + "new_map.png"
+    APP_ICON = BASE_PATH + "icon_app.png"
+    CONFIG_ICON = BASE_PATH + "icon_config.png"
+    UNDIP_LOGO = BASE_PATH + "UNDIP_logo.png"
+    BANDHA_LOGO = BASE_PATH + "bandha_logo.png"
 
 class ROS2_Dashboard:
     def __init__(self, master):
@@ -36,12 +49,15 @@ class ROS2_Dashboard:
         self.master.geometry("1700x850")
         # self.master.resizable(False, False)
         
+        # Store resource paths for use in widgets
+        self.resources = Resources
+        
         # Set logo icon
-        icon = ImageTk.PhotoImage(Image.open("/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/resources/icon_app.png"))
+        icon = ImageTk.PhotoImage(Image.open(Resources.APP_ICON))
         self.master.iconphoto(True, icon)
         
         # Config file path
-        self.config_file = "/home/haidar/ros2_git/src/ROS2-Dashboard/ROS2_Dashboard/json/config.json"
+        self.config_file = Resources.CONFIG_FILE
         
         # ROS2 Node initialization
         self.node = Node("ros2_dashboard_gui")
@@ -113,10 +129,10 @@ class ROS2_Dashboard:
         
         # Configure grid weights
         self.main_frame.grid_rowconfigure(0, weight=0, minsize=250)  # Reduced height for Send Data and Status
-        self.main_frame.grid_rowconfigure(1, weight=1)  # Row for Position
-        self.main_frame.grid_columnconfigure(0, weight=5)  # Column for Data Logger
-        self.main_frame.grid_columnconfigure(1, weight=1)  # Column for Send Data
-        self.main_frame.grid_columnconfigure(2, weight=0)  # Column for Status
+        self.main_frame.grid_rowconfigure(1, weight=1)  # Row for Visual
+        self.main_frame.grid_columnconfigure(0, weight=10)  # Column for Data Logger
+        self.main_frame.grid_columnconfigure(1, weight=2)  # Column for Send Data
+        self.main_frame.grid_columnconfigure(2, weight=1)  # Column for Status
         self.main_frame.grid_columnconfigure(3, weight=0)  # Column for GUI Info
     
     def update_clock(self):
@@ -307,11 +323,6 @@ class ROS2_Dashboard:
             status_topic = f"/ROBOT{i}/STATUS"
             if status_topic in self.available_topics:
                 self.subscribe_to_status(status_topic, i)
-            
-            # Auto-subscribe to battery topics for both robots
-            battery_topic = f"/ROBOT{i}/battery"
-            if battery_topic in self.available_topics:
-                self.subscribe_to_battery(battery_topic, i)
         
         # Subscribe to position topics for both robots
         robot1_pos_topic = self.settings_robot1_pos_combo.get()
@@ -433,7 +444,6 @@ class ROS2_Dashboard:
 # Import subscription functions and methods
 ROS2_Dashboard.subscribe_to_topic = subscribe_to_topic
 ROS2_Dashboard.subscribe_to_status = subscribe_to_status
-ROS2_Dashboard.subscribe_to_battery = subscribe_to_battery
 ROS2_Dashboard.subscribe_to_position = subscribe_to_position
 ROS2_Dashboard.subscribe_to_graph_topic = subscribe_to_graph_topic
 ROS2_Dashboard.update_robot_position = update_robot_position

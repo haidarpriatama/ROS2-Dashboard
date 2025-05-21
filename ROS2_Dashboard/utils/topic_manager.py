@@ -184,85 +184,62 @@ def subscribe_to_status(dashboard, topic_name, robot_num=1):
     
     # Create subscription for status
     def callback(msg):
-        # Parse status message (format: "ST CPU_USAGE MEMORY_USAGE CPU_TEMP")
+        # Parse status message (format: "ST CPU_USAGE MEMORY_USAGE CPU_TEMP BANDWIDTH")
         try:
             data = str(msg.data).split()
-            if len(data) >= 4:
-                # Extract CPU, Memory usage, and CPU temp
-                # Format: "ST [CPU] [Memory] [CPU_TEMP]"
+            if len(data) >= 5:
+                # Extract CPU, Memory usage, CPU temp, and Bandwidth
+                # Format: "ST [CPU] [Memory] [CPU_TEMP] [Bandwidth]"
                 if data[0].upper() == "ST":
                     cpu_usage = data[1]
                     memory_usage = data[2]
                     cpu_temp = data[3]
+                    bandwidth = data[4]
                     
                     # Update status labels for this robot
                     cpu_attr = f"cpu_usage_{robot_num}"
                     mem_attr = f"memory_usage_{robot_num}"
                     temp_attr = f"cpu_temp_{robot_num}"
+                    bandwidth_attr = f"bandwidth_{robot_num}"
                     
-                    # Handle CPU usage - show percentage symbol and color-code based on value
+                    # Update CPU usage
                     if hasattr(dashboard, cpu_attr):
-                        try:
-                            # Try to convert to float to check if it's a number
-                            cpu_value = float(cpu_usage)
-                            
-                            # Color code based on CPU usage ranges
-                            if 0 <= cpu_value <= 45:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#00AA00")  # Green
-                            elif 45 < cpu_value <= 80:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#EEFF00")  # Yellow
-                            elif 80 < cpu_value <= 90:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FF8C00")  # Orange
-                            elif cpu_value > 90:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="#FF0000")  # Red
-                            else:
-                                getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="black")
-                            
-                            # Show percentage symbol
-                            getattr(dashboard, f"{cpu_attr}_pct").pack(side=tk.LEFT, padx=0)
-                        except ValueError:
-                            # Not a number (like N/A), don't show % symbol
-                            getattr(dashboard, cpu_attr).config(text=cpu_usage, fg="black")
-                            getattr(dashboard, f"{cpu_attr}_pct").pack_forget()
+                        getattr(dashboard, cpu_attr).config(text=cpu_usage)
+                        # Show percentage symbol
+                        pct_label = getattr(dashboard, f"{cpu_attr}_pct", None)
+                        if pct_label:
+                            pct_label.pack(side=tk.LEFT, padx=0)
                     
-                    # Handle Memory usage - show percentage symbol if it's a number
+                    # Update Memory usage
                     if hasattr(dashboard, mem_attr):
-                        try:
-                            # Try to convert to float to check if it's a number
-                            float(memory_usage)
-                            # Set text without % (will use separate % label)
-                            getattr(dashboard, mem_attr).config(text=memory_usage)
-                            # Show percentage symbol
-                            getattr(dashboard, f"{mem_attr}_pct").pack(side=tk.LEFT, padx=0)
-                        except ValueError:
-                            # Not a number (like N/A), don't show % symbol
-                            getattr(dashboard, mem_attr).config(text=memory_usage)
-                            getattr(dashboard, f"{mem_attr}_pct").pack_forget()
+                        getattr(dashboard, mem_attr).config(text=memory_usage)
+                        # Show percentage symbol
+                        pct_label = getattr(dashboard, f"{mem_attr}_pct", None)
+                        if pct_label:
+                            pct_label.pack(side=tk.LEFT, padx=0)
                     
-                    # Handle CPU temperature - show degree Celsius symbol
+                    # Update CPU temperature
                     if hasattr(dashboard, temp_attr):
-                        try:
-                            # Try to convert to float to check if it's a number
-                            float(cpu_temp)
-                            # Set text without °C (will use separate label)
-                            getattr(dashboard, temp_attr).config(text=cpu_temp)
-                            # Show degree symbol
-                            getattr(dashboard, f"{temp_attr}_unit").pack(side=tk.LEFT, padx=0)
-                        except ValueError:
-                            # Not a number (like N/A), don't show degree symbol
-                            getattr(dashboard, temp_attr).config(text=cpu_temp)
-                            getattr(dashboard, f"{temp_attr}_unit").pack_forget()
+                        getattr(dashboard, temp_attr).config(text=cpu_temp)
+                        # Show °C symbol
+                        unit_label = getattr(dashboard, f"{temp_attr}_unit", None)
+                        if unit_label:
+                            unit_label.pack(side=tk.LEFT, padx=0)
+                    
+                    # Update Bandwidth
+                    if hasattr(dashboard, bandwidth_attr):
+                        getattr(dashboard, bandwidth_attr).config(text=bandwidth)
+                        # Show Kb/s symbol
+                        unit_label = getattr(dashboard, f"{bandwidth_attr}_unit", None)
+                        if unit_label:
+                            unit_label.pack(side=tk.LEFT, padx=0)
         except Exception as e:
             print(f"Error parsing status message for Robot {robot_num}: {e}")
     
-    # Subscribe to topic (using appropriate message type)
+    # Subscribe to topic
     try:
-        msg_type = String
-        if topic_name in dashboard.available_types and dashboard.available_types[topic_name] == "Int32":
-            msg_type = Int32
-            
         sub = dashboard.node.create_subscription(
-            msg_type,
+            String,
             topic_name,
             callback,
             10
@@ -270,80 +247,6 @@ def subscribe_to_status(dashboard, topic_name, robot_num=1):
         setattr(dashboard, status_sub_attr, sub)
     except Exception as e:
         print(f"Error subscribing to status topic {topic_name} for Robot {robot_num}: {e}")
-
-def subscribe_to_battery(dashboard, topic_name, robot_num=1):
-    """Subscribe to battery topic for specified robot"""
-    # Always use the predefined topic name
-    topic_name = f"/ROBOT{robot_num}/battery"
-    
-    # Attribute names for battery subscriptions
-    battery_sub_attr = f"battery_topic{robot_num}_sub"
-    battery_topic_attr = f"battery_topic{robot_num}"
-    
-    # Unsubscribe if already subscribed
-    if hasattr(dashboard, battery_topic_attr) and getattr(dashboard, battery_topic_attr) and hasattr(dashboard, battery_sub_attr):
-        dashboard.node.destroy_subscription(getattr(dashboard, battery_sub_attr))
-    
-    # Check if topic is valid
-    if topic_name not in dashboard.available_topics:
-        print(f"Battery topic {topic_name} not available for Robot {robot_num}. Skipping subscription.")
-        setattr(dashboard, battery_topic_attr, None)
-        return
-    
-    # Set topic name
-    setattr(dashboard, battery_topic_attr, topic_name)
-    print(f"Subscribing to robot {robot_num} battery topic: {topic_name}")
-    
-    # Create subscription for battery
-    def callback(msg):
-        try:
-            # Handle both string and int messages
-            if isinstance(msg, String):
-                try:
-                    battery_level = int(msg.data)
-                    is_number = True
-                except ValueError:
-                    battery_level = msg.data
-                    is_number = False
-            else:  # Int32
-                battery_level = msg.data
-                is_number = True
-            
-            # Update battery label
-            batt_attr = f"battery_{robot_num}"
-            if hasattr(dashboard, batt_attr):
-                # Set the text value
-                getattr(dashboard, batt_attr).config(text=str(battery_level))
-                
-                # Show or hide the percentage symbol
-                if is_number:
-                    getattr(dashboard, f"{batt_attr}_pct").pack(side=tk.LEFT, padx=0)
-                    # Update battery progress bar
-                    getattr(dashboard, f"battery{robot_num}_progress")['value'] = battery_level
-                else:
-                    getattr(dashboard, f"{batt_attr}_pct").pack_forget()
-            
-        except Exception as e:
-            print(f"Error parsing battery message for Robot {robot_num}: {e}")
-    
-    # Subscribe to topic (supporting both String and Int32)
-    try:
-        # Try to determine message type
-        msg_type = String
-        if topic_name in dashboard.available_types and dashboard.available_types[topic_name] == "Int32":
-            msg_type = Int32
-            
-        sub = dashboard.node.create_subscription(
-            msg_type,
-            topic_name,
-            callback,
-            10
-        )
-        setattr(dashboard, battery_sub_attr, sub)
-        print(f"Subscribed to {topic_name} for Robot {robot_num} battery using {msg_type.__name__}")
-        
-    except Exception as e:
-        print(f"Error subscribing to battery topic {topic_name} for Robot {robot_num}: {e}")
 
 def subscribe_to_position(dashboard, topic_name, robot_num=1):
     """Subscribe to position topic for specified robot"""
@@ -429,21 +332,37 @@ def update_robot_position(dashboard, robot_num, x, y):
     x_original_rounded = round(x_original, 2)
     y_original_rounded = round(y_original, 2)
     
-    # Limit x and y to map boundaries for plotting
+    # Limit x and y to map boundaries
+    # X is from 0 to 1500
+    # Y is from 0 to 800
     x_plot = max(0, min(1500, x))  # Limit x between 0 and 1500
     y_plot = max(0, min(800, y))   # Limit y between 0 and 800
 
-    # Update robot position on the map (with limited coordinates)
+    # Store the robot positions for team view switching
     if robot_num == 1:
-        dashboard.robot1_pos.set_data(x_plot, y_plot)  # Update position for Robot 1 (limited)
-        dashboard.robot1_coords.config(text=f"({x_original_rounded}, {y_original_rounded})")  # Show original coordinates
+        dashboard.robot1_pos_data = [x_plot, y_plot]
+        dashboard.robot1_coords.config(text=f"({x_original_rounded}, {y_original_rounded})")
     elif robot_num == 2:
-        dashboard.robot2_pos.set_data(x_plot, y_plot)  # Update position for Robot 2 (limited)
-        dashboard.robot2_coords.config(text=f"({x_original_rounded}, {y_original_rounded})")  # Show original coordinates
-
+        dashboard.robot2_pos_data = [x_plot, y_plot]
+        dashboard.robot2_coords.config(text=f"({x_original_rounded}, {y_original_rounded})")
+    
+    # Update robot position on the map based on the current view
+    update_robot_display(dashboard)
+    
     # Redraw the canvas
     dashboard.fig.canvas.draw_idle()
     dashboard.fig.canvas.flush_events()
+
+def update_robot_display(dashboard):
+    """Update the robot markers on the map based on the current team view"""
+    # Use the stored robot positions to update the display
+    if hasattr(dashboard, 'robo1_pos_data') and hasattr(dashboard, 'robot2_pos_data'):
+        r1x, r1y = dashboard.robot1_pos_data
+        r2x, r2y = dashboard.robot2_pos_data
+        
+        # Update the plot data
+        dashboard.robot1_pos.set_data(r1x, r1y)
+        dashboard.robot2_pos.set_data(r2x, r2y)
 
 def subscribe_to_graph_topic(dashboard, topic_name):
     """Subscribe to a graph topic with specific data format"""
