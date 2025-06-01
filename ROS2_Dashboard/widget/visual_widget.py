@@ -21,7 +21,7 @@ def create_visual_widget(dashboard):
     
     # Create Graph tab
     dashboard.graph_tab = ttk.Frame(dashboard.position_notebook)
-    dashboard.position_notebook.add(dashboard.graph_tab, text="Graph")
+    dashboard.position_notebook.add(dashboard.graph_tab, text="Plot")
     
     # ---- MAP TAB ----
     # Top frame to hold both topic selection and team toggle button
@@ -135,7 +135,7 @@ def create_visual_widget(dashboard):
     graph_topics_frame.pack(fill=tk.X, pady=2)
     
     # Graph topic selection
-    tk.Label(graph_topics_frame, text="Graph Topic:").grid(row=0, column=0, sticky="w", padx=2)
+    tk.Label(graph_topics_frame, text="Plot Topic:").grid(row=0, column=0, sticky="w", padx=2)
     dashboard.graph_topic_combo = ttk.Combobox(graph_topics_frame, values=dashboard.available_topics, width=50)
     dashboard.graph_topic_combo.grid(row=0, column=1, padx=2, pady=2)
     dashboard.graph_topic_combo.bind("<<ComboboxSelected>>", 

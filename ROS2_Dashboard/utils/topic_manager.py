@@ -1,5 +1,6 @@
 import datetime
 import tkinter as tk
+from tkinter import ttk
 from std_msgs.msg import String, Int32
 from geometry_msgs.msg import Point, Pose, PoseStamped
 
@@ -43,15 +44,16 @@ def get_available_topics(dashboard):
             if hasattr(dashboard, 'output_topic') and dashboard.output_topic in dashboard.available_topics:
                 dashboard.output_topics.set(dashboard.output_topic)
         
-        # Check for newly appeared robot status/battery topics
+        # Check for newly appeared robot status/battery/rpm topics
         new_topics = set(dashboard.available_topics) - old_topics
         if new_topics:
             print(f"New topics detected: {new_topics}")
             
-            # Check for robot status topics
+            # Check for robot status, battery and RPM topics
             for i in range(1, 3):
                 status_topic = f"/ROBOT{i}/STATUS"
                 battery_topic = f"/ROBOT{i}/battery"
+                rpm_topic = f"/ROBOT{i}/shot"
                 
                 # Check if status topic is new or if we're not subscribed yet
                 if status_topic in new_topics or (
@@ -72,12 +74,21 @@ def get_available_topics(dashboard):
                     if battery_topic in dashboard.available_topics:
                         print(f"Auto-subscribing to newly detected topic: {battery_topic}")
                         dashboard.subscribe_to_battery(battery_topic, i)
+                
+                # Check if RPM topic is new or if we're not subscribed yet
+                if rpm_topic in new_topics or (
+                    rpm_topic in dashboard.available_topics and 
+                    (not hasattr(dashboard, f"rpm_topic{i}_sub") or 
+                     not getattr(dashboard, f"rpm_topic{i}_sub"))
+                ):
+                    if rpm_topic in dashboard.available_topics:
+                        print(f"Auto-subscribing to newly detected topic: {rpm_topic}")
+                        dashboard.subscribe_to_rpm(rpm_topic, i)
         
         return True
     except Exception as e:
         print(f"Error getting topics: {e}")
         return False
-
 def subscribe_to_topic(dashboard, topic_num, topic_name):
     """Subscribe to a standard topic for data logging"""
     # Unsubscribe if already subscribed
@@ -158,6 +169,57 @@ def subscribe_to_topic(dashboard, topic_num, topic_name):
         setattr(dashboard, f"topic{topic_num}_sub", sub)
     except Exception as e:
         print(f"Error subscribing to topic {topic_name}: {e}")
+
+# Add this function to the existing file
+
+def subscribe_to_rpm(dashboard, topic_name, robot_num):
+    """Subscribe to RPM topic for the specified robot"""
+    # Unsubscribe if already subscribed
+    rpm_sub_attr = f"rpm_topic{robot_num}_sub"
+    if hasattr(dashboard, rpm_sub_attr):
+        dashboard.node.destroy_subscription(getattr(dashboard, rpm_sub_attr))
+    
+    # Create custom style for progress bars
+    style = ttk.Style()
+    style.configure("Green.Horizontal.TProgressbar", background='green')
+    style.configure("Orange.Horizontal.TProgressbar", background='orange')
+    style.configure("Red.Horizontal.TProgressbar", background='red')
+    
+    # Set default style for all progress bars
+    for motor in ["top", "bottom"]:
+        bar_attr = f"rpm_{motor}_{robot_num}_bar"
+        if hasattr(dashboard, bar_attr):
+            getattr(dashboard, bar_attr).config(style="Green.Horizontal.TProgressbar")
+    
+    # Callback function for RPM data
+    def rpm_callback(msg):
+        try:
+            # Format: "RPM {top_motor} {bottom_motor}"
+            data = str(msg.data).split()
+            if len(data) >= 4 and data[0].upper() == "SA":
+                top_rpm = data[2]
+                bottom_rpm = data[3]
+                
+                # Update RPM values and progress bars
+                dashboard.update_rpm_progress_bar(robot_num, "top", top_rpm)
+                dashboard.update_rpm_progress_bar(robot_num, "bottom", bottom_rpm)
+                
+        except Exception as e:
+            print(f"Error parsing RPM message for Robot {robot_num}: {e}")
+    
+    # Subscribe to the RPM topic
+    try:
+        from std_msgs.msg import String
+        sub = dashboard.node.create_subscription(
+            String,
+            topic_name,
+            rpm_callback,
+            10
+        )
+        setattr(dashboard, rpm_sub_attr, sub)
+        print(f"Subscribed to {topic_name} for Robot {robot_num} RPM")
+    except Exception as e:
+        print(f"Error subscribing to RPM topic {topic_name} for Robot {robot_num}: {e}")
 
 def subscribe_to_status(dashboard, topic_name, robot_num=1):
     """Subscribe to status topic for specified robot"""
@@ -355,14 +417,18 @@ def update_robot_position(dashboard, robot_num, x, y):
 
 def update_robot_display(dashboard):
     """Update the robot markers on the map based on the current team view"""
-    # Use the stored robot positions to update the display
-    if hasattr(dashboard, 'robo1_pos_data') and hasattr(dashboard, 'robot2_pos_data'):
+    if hasattr(dashboard, 'robot1_pos_data') and hasattr(dashboard, 'robot2_pos_data'):
         r1x, r1y = dashboard.robot1_pos_data
         r2x, r2y = dashboard.robot2_pos_data
         
-        # Update the plot data
-        dashboard.robot1_pos.set_data(r1x, r1y)
-        dashboard.robot2_pos.set_data(r2x, r2y)
+        # FIXED: Use proper format for matplotlib plot data
+        # set_data expects two arrays/lists: [x_values], [y_values]
+        dashboard.robot1_pos.set_data([r1x], [r1y])  # Wrap in lists
+        dashboard.robot2_pos.set_data([r2x], [r2y])  # Wrap in lists
+            
+        # Force redraw
+        dashboard.fig.canvas.draw_idle()
+        dashboard.fig.canvas.flush_events()
 
 def subscribe_to_graph_topic(dashboard, topic_name):
     """Subscribe to a graph topic with specific data format"""

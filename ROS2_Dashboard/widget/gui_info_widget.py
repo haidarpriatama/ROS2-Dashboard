@@ -7,12 +7,24 @@ def create_gui_info_widget(dashboard):
     dashboard.gui_info_frame = tk.Frame(dashboard.main_frame)
     dashboard.gui_info_frame.grid(row=0, column=3, rowspan=2, sticky="nsew", padx=5, pady=5)
     
-    # App info
-    tk.Label(
-        dashboard.gui_info_frame, 
-        text="Graphical\nUser\nInterface\nRobot", 
-        font=("Arial", 14) 
-    ).pack(pady=20)
+    # Replace text with GUI title image
+    try:
+        # GUI Title Logo
+        gui_title_img = Image.open(dashboard.resources.GUI_TITLE)
+        gui_title_img = gui_title_img.resize((100, 100), Image.LANCZOS)  # Adjust size as needed
+        gui_title_photo = ImageTk.PhotoImage(gui_title_img)
+        
+        gui_title_label = tk.Label(dashboard.gui_info_frame, image=gui_title_photo)
+        gui_title_label.image = gui_title_photo  # Keep a reference to prevent garbage collection
+        gui_title_label.pack(pady=20)
+    except Exception as e:
+        print(f"Error loading GUI title image: {e}")
+        # Fallback if image can't be loaded
+        tk.Label(
+            dashboard.gui_info_frame, 
+            text="Graphical\nUser\nInterface\nRobot", 
+            font=("Arial", 14) 
+        ).pack(pady=20)
     
     # Load logos
     try:

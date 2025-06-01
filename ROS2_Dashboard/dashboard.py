@@ -11,7 +11,7 @@ import os
 # Import GUI components
 from widget.data_logger_widget import create_data_logger_widget
 from widget.send_data_widget import create_send_data_widget, send_pid_values
-from widget.status_widget import create_status_widget
+from widget.status_widget import create_status_widget, update_rpm_progress_bar, subscribe_to_rpm
 from widget.visual_widget import create_visual_widget, add_graph_methods
 from widget.gui_info_widget import create_gui_info_widget
 
@@ -38,6 +38,7 @@ class Resources:
     MAP_IMAGE = BASE_PATH + "new_map.png"
     APP_ICON = BASE_PATH + "icon_app.png"
     CONFIG_ICON = BASE_PATH + "icon_config.png"
+    GUI_TITLE = BASE_PATH + "GUI_title.png"
     UNDIP_LOGO = BASE_PATH + "UNDIP_logo.png"
     BANDHA_LOGO = BASE_PATH + "bandha_logo.png"
 
@@ -131,7 +132,7 @@ class ROS2_Dashboard:
         self.main_frame.grid_rowconfigure(0, weight=0, minsize=250)  # Reduced height for Send Data and Status
         self.main_frame.grid_rowconfigure(1, weight=1)  # Row for Visual
         self.main_frame.grid_columnconfigure(0, weight=10)  # Column for Data Logger
-        self.main_frame.grid_columnconfigure(1, weight=2)  # Column for Send Data
+        self.main_frame.grid_columnconfigure(1, weight=1)  # Column for Send Data
         self.main_frame.grid_columnconfigure(2, weight=1)  # Column for Status
         self.main_frame.grid_columnconfigure(3, weight=0)  # Column for GUI Info
     
@@ -451,3 +452,5 @@ ROS2_Dashboard.send_data = send_data
 ROS2_Dashboard.send_pid_values = send_pid_values 
 ROS2_Dashboard.save_config = save_config
 ROS2_Dashboard.load_config = load_config
+ROS2_Dashboard.update_rpm_progress_bar = update_rpm_progress_bar
+ROS2_Dashboard.subscribe_to_rpm = subscribe_to_rpm
